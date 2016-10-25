@@ -1,0 +1,109 @@
+<style type="text/css">.PadWhiteAreaBox { /* page element external to this template */
+        padding-top: 0;
+    }
+    .ng-cloak {
+        display: none !important;
+    }
+    h1, h2 {
+        font-family: 'Exo', sans-serif;
+    }
+    .bowl-info {
+        text-align: center;
+        padding: 0.5em 0;
+        font-size: 1.5em;
+        background-color: #eee;
+    }
+    .bowl-info li {
+        display: inline-block;
+        margin: 0 0.4em;
+    }
+    .bowl {
+        float: left;
+        width: 245px;
+        height: 490px;
+        box-sizing: border-box;
+        padding: 1em;
+        font-size: 0.8em;
+    }
+    .bowl.playoff {
+        background-color: rgba(243, 212, 72, 4);
+    }
+    .bowl img {
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 9px;
+        background-color: white;
+    }
+    .bowl.playoff img {
+        border: 2px solid #FFC72C;
+    }
+    .bowl h2 {
+        color: #041E42;
+        margin-bottom: 0;
+        line-height: 1.1;
+        font-size: 2.5em;
+    }
+    .bowl span {
+        display: block;
+        font-size: 1.2em;
+    }
+    .bowl span.conference {
+        font-weight: bold;
+        color: #041E42;
+        font-size: 1.4em;
+        margin: 0.4em 0;
+    }
+    .bowl span.stadium i {
+        margin-right: 0.25em;
+    }
+    .bowl span.location {
+        margin-left: 1.2em;
+        margin-bottom: 0.25em;
+    }
+    div.bowlInfo {
+        padding-top: 20px;
+    }
+    .playoff-info {
+        text-align: right;
+    }
+</style>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script><script>
+    var app = angular.module('bowlGames', []);
+    app.controller('BowlController', function($scope, $http){
+        $http.get('https://spreadsheets.google.com/feeds/list/126o06NkYz3rLRrIbzKAeLtrK-4a_Eosccmoser11hnk/od6/public/values?alt=json').success(function(data) {
+            /* pretty up the JSON that Google Sheets returns */
+            for (var i = 0; i < data.feed.entry.length; i++) {
+                for (var key in data.feed.entry[i]) {
+                    if (data.feed.entry[i].hasOwnProperty(key) && key.substr(0,4) === 'gsx$') {
+                        data.feed.entry[i][key.substr(4)] = data.feed.entry[i][key].$t;
+                        delete data.feed.entry[i][key];
+                    }
+                }
+            }
+            $scope.games = data.feed.entry;
+        }).
+        error(function(data, status, headers, config){
+            console.log(data);
+        });
+    });
+</script><!-- page content begins here --><img alt="" src="http://uclabruins.com/pics33/0/LM/LMIBULDEYYAEXUY.20150901195612.jpg" style="display: inline-block;" />
+<h2></h2>
+
+<center><span style="color:#041E42;">2015-16 Pac-12 Postseason Affiliations</span></center>
+<!--<p class="lead">-->
+
+<p><span style="color:#041E42; font-size: 16px;">Become a <a href="http://www.uclabruins.com/ViewArticle.dbml?&amp;ATCLID=208193510&amp;DB_OEM_ID=30500#collapseOne" target="_blank"> UCLA Football Season Ticket Holder</a> or donate to the <a href="http://www.woodenathleticfund.com/?DB_OEM_ID=30500" target="_blank">Wooden Athletic Fund </a> (WAF) today to receive the exclusive opportunity to request postseason tickets. Football Season Ticket Holders and WAF members can now place a request for all postseason game(s) that UCLA plays in. Pac-12 Championship Game tickets requests now available in the UCLA section. Bowl game ticket requests must be submitted by Monday, December 7th at 5:00 pm to be included in the priority process. Ticket requests will only be fulfilled for the postseason game(s) in which UCLA plays. All other ticket requests will be automatically cancelled. </span></p>
+
+<ul class="bowl-info unstyled">
+	<li><a href="https://oss.ticketmaster.com/aps/uclaathletics2/EN/buy/quickbuy/1073" target="_new">Request Postseason Tickets</a></li>
+	<li><a href="http://www.uclabruins.com/ViewArticle.dbml?ATCLID=209734319" target="_new">Additional Information</a></li>
+	<!--<li><!--<i class="icon-info-sign"></i> --><!--<a href="http://www.ticketmaster.com/event/1C004F1CCD41A66A" target="_new">Request Pac-12 Championship Tickets</a></li>-->
+</ul>
+
+<section class="bowls" ng-app="bowlGames">
+<div class="games" ng-controller="BowlController as bowl">
+<div class="{{game.type}} bowl" ng-cloak="" ng-repeat="game in games"><img alt="" src="http://uclabruins.com{{game.logourl}}" style="display: inline-block;" />
+<h2 class="title">{{game.name}}</h2>
+<span class="conference">{{game.conference}}</span> <a href="{{game.mapurl}}" target="_blank" title="Map"> <span class="stadium">{{game.stadium}}</span> <span class="location">{{game.location}}</span> </a> <span class="date-time"> {{game.date}}, {{game.time}}</span> <span class="price"> Tickets: ${{game.price}}</span> <span class="quantity"> Quantity: {{game.quantity | number}}</span></div>
+</div>
+</section>
+<!--<p class="playoff-info">Participants chosen by College Football Playoff selection committee. </p>-->
