@@ -1,26 +1,50 @@
 angular.module('app.controllers', [])
   
-.controller('homePageCtrl', ['$scope', '$stateParams', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
+.controller('homePageCtrl', ['$scope', '$stateParams', 'TripSvc', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
 // You can include any angular dependencies as parameters for this function
 // TIP: Access Route Parameters for your page via $stateParams.parameterName
-function ($scope, $stateParams, Pouch) {
+function ($scope, $stateParams, Pouch, TripSvc) {
+	
 
 }])
    
-.controller('calendarCtrl', ['$scope', '$stateParams', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
+.controller('calendarCtrl', ['$scope', '$stateParams', 'ImageSvc', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
 // You can include any angular dependencies as parameters for this function
 // TIP: Access Route Parameters for your page via $stateParams.parameterName
-function ($scope, $stateParams) {
-
+function ($scope, $stateParams, ImageSvc) {
+	
+	$scope.imageSvc = ImageSvc;
+	$scope.blobUrl = ImageSvc.currentImage.imageUrl;
 
 }])
    
-.controller('gCStatusCtrl', ['$scope', '$stateParams', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
+.controller('gCStatusCtrl', ['$scope', '$log', '$stateParams', 'ImageSvc', 'Pouch', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
 // You can include any angular dependencies as parameters for this function
 // TIP: Access Route Parameters for your page via $stateParams.parameterName
-function ($scope, $stateParams) {
-
-
+function ($scope, $log, $stateParams, ImageSvc, Pouch) {
+	
+	$scope.imageSvc = ImageSvc;
+	$scope.takePic = function() {
+		ImageSvc.takePicture().then(function(file) {
+			var docId = 'img_' + moment().format('YYMMDD.hhmmss');
+			var attachId = file.name;
+			
+			Pouch.db.putAttachment(docId, attachId, file, 'image/jpeg')
+			.then(function (result) {
+				// handle result
+				$log.log(result);
+				return Pouch.db.getAttachment(docId, attachId);
+			}).then(function(blob) {
+				if (blob) {
+					$log.info(blob);
+					ImageSvc.currentImage.imageUrl = URL.createObjectURL(blob);
+					$log.info(ImageSvc.currentImage.imageUrl);
+				}
+			}).catch(function (err) {
+				console.log(err);
+			});	
+		});
+	}
 }])
          
 .controller('queueCtrl', ['$scope', '$stateParams', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
@@ -39,25 +63,29 @@ function ($scope, $stateParams) {
 
 }])
    
-.controller('teamsCtrl', ['$scope', '$stateParams', '$timeout', 'Pouch', 'Trip', 'TripSvc', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
+.controller('teamsCtrl', ['$scope', '$log', '$stateParams', '$timeout', 'Pouch', 'Trip', 'TripSvc', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
 // You can include any angular dependencies as parameters for this function
 // TIP: Access Route Parameters for your page via $stateParams.parameterName
-function ($scope, $stateParams, $timeout, Pouch, Trip, TripSvc) {
+function ($scope, $log, $stateParams, $timeout, Pouch, Trip, TripSvc) {
+	var self = this;
+	self.trips = [];
 	
-//	var t = new Trip();
-//	t.title = "Trip 2";
-//	var rcpt = { type: 'hotel', amount: 482.73 };
-//	t.addReceipt(rcpt);
-	$timeout(function() {
-		console.log('pausing');
-		//_runController();
-		console.log(TripSvc);
-		TripSvc.trips[0].receiptIndex = 1;
-		TripSvc.trips[1].receiptIndex = 4;
-		TripSvc.saveTrips().then(function() {
-			console.log('completed tripSvc save');
+	_init();	
+	
+	function _init() {
+		TripSvc.ready.then(function() {
+			$log.info('controller started');
+			//Pouch.reset();
+			//_addTrip().then(function() { _addTrip(); });
 		});
-	}, 1500);
+	}
+
+	function _addTrip() {
+		var tripIndex = TripSvc.trips.length;
+		var t = new Trip();
+		t.title = 'Trip #' + (tripIndex + 1);		
+		return TripSvc.addTrip(t);
+	}
 	
 	function _runController() {
 	var attachment = 

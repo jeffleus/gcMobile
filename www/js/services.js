@@ -1,29 +1,42 @@
 angular.module('app.services', [])
 
-.service('TripSvc', ['$q', 'Pouch', 'Trip', function($q, Pouch, Trip){
+.service('TripSvc', ['$q', '$log', 'Pouch', 'Trip', function($q, $log, Pouch, Trip){
 	
 	var self = this;
 	self.trips = [];
 	self.addTrip = _addTrip;
 	self.saveTrips = _saveTrips;
-	_init();
+	self.ready = _init();
 	
 	function _init() {
-		Pouch.db.allDocs({ include_docs:true, attachments:true }).then(function(result) {
+		return Pouch.db.allDocs({ include_docs:true, attachments:true })
+		.then(function(result) {
 			console.info(result);
 			result.rows.forEach(function(r) {
-				var t = new Trip(r.doc);
-				self.addTrip(t);
-				console.log('add trip: ' + t._id);
+				if (r.doc.tripDate) {
+					var t = new Trip(r.doc);
+					self.trips.push(t);
+					$log.log('init trip: ' + t._id);
+				} else { $log.log('not a trip record'); }
 			});
 			return result;
-		}).then(function() {
-			console.log('tripCount: ' + self.trips.length);
+		}).catch(function(error) {
+			$log.error(err);
+			return false;
 		});
+//		}).then(function() {
+//			console.log('tripCount: ' + self.trips.length);
+//		});
 	}
 	
 	function _addTrip(trip) {
 		self.trips.push(trip);
+		return Pouch.db.put(trip)
+			.then(function(result) {
+				console.info('Trip successfully added to pouchdb');				
+			}).catch(function(err) {
+				console.error(err);
+			});
 	}
 	
 	function _saveTrips() {
@@ -44,13 +57,14 @@ angular.module('app.services', [])
 			}).catch(function(err) {
 				console.error('Err_SaveTrip:');
 				console.error(err);
+				return false;
 			});
 		};
 	}
 
 }])
 
-.factory('Trip', function() {
+.factory('Trip', function($log, Pouch) {
     var Trip = function(data) {
         var self = this;
 		this._id = moment().format('YYYYMMDD.hhmmss.SSS');
@@ -74,7 +88,30 @@ angular.module('app.services', [])
         }
 		
 		Trip.prototype.addReceipt = function(r) {
+			var self = this;			
+//			var attachment = 
+//					"TGVnZW5kYXJ5IGhlYXJ0cywgdGVhciB1cyBhbGwgYXBhcnQKTWFrZS" +
+//					"BvdXIgZW1vdGlvbnMgYmxlZWQsIGNyeWluZyBvdXQgaW4gbmVlZA==";
+			var attachment = r.imageFile;
 			self.receipts.push(r);
+			
+//			Pouch.db.putAttachment(self._id, r.attachmentId, self._rev, attachment, 'image/jpeg')
+//			.then(function (result) {
+//				// handle result
+//				$log.log(result);
+//				return Pouch.db.get(TripSvc.trips[1]._id, { attachments:true });
+//			}).then(function(tripDoc) {
+//				$log.info(tripDoc);
+//				var updatedTrip = new Trip(tripDoc);				
+//				TripSvc.trips[1] = updatedTrip;
+//				//delete tripDoc._attachments;
+//				console.info(TripSvc.trips[1]);
+//		//		return Pouch.db.put(tripDoc);
+//		//	}).then(function(result) {
+//		//		console.info(result);		
+//			}).catch(function (err) {
+//				console.log(err);
+//			});	
 		}
     }
 

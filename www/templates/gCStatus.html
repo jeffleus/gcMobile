@@ -18,5 +18,7 @@
                 <input type="text" placeholder="operational">
             </label>
         </form>
+		<button ng-click="takePic()">GetPic</button>
+		<img ng-src="{{(imageSvc.currentImage.imageUrl)?imageSvc.currentImage.imageUrl:imageSvc.currentImage.imageFile.localURL}}">
     </ion-content>
 </ion-view>

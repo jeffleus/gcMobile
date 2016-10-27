@@ -5,9 +5,16 @@
 // the 2nd parameter is an array of 'requires'
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
-angular.module('app', ['ionic', 'app.services', 'app.controllers', 'app.routes', 'app.directives'])
+angular.module('app', ['ionic', 'ngCordova', 'app.services', 'app.controllers', 'app.routes', 'app.directives'])
 
-.run(function($ionicPlatform, TripSvc) {
+.config( [
+	'$compileProvider',
+	function( $compileProvider ) { 
+		$compileProvider.imgSrcSanitizationWhitelist(/^\s*(https?|file|blob|cdvfile):|data:image\//);
+	}
+])
+
+.run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
