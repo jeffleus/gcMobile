@@ -1,45 +1,9 @@
 <ion-view title="Teams" id="page7">
     <ion-content padding="true" class="has-header">
+        <button ng-click="initDb()">Init DB</button><button ng-click="getAttachments()">GetAtt</button>
+        <img ng-repeat="a in atts" ng-src="{{a.image}}" width="100px">
         <ion-list id="teams-list10">
-            <ion-item class="item-thumbnail-left" ui-sref="tabsController.arizona">
-                <img src="/img/arizona.png">
-                <h2>Arizona</h2>
-                <p>Tim Cummins
-                    <br>(123) 123-1234
-                    <br>
-                    <a mailto: "tcummins@ua.edu"="">tcummins@ua.edu
-                        <!--<a--></a>
-                </p>
-            </ion-item>
-            <ion-item class="item-thumbnail-left" ui-sref="tabsController.arizonaSt">
-                <img src="/img/asu_100.png">
-                <h2>Arizona St</h2>
-                <p>Alex Hodge
-                    <br>(123) 123-1234
-                    <br>
-                    <a mailto: "alex.hodge@asu.edu"="">alex.hodge@asu.edu</a>
-                </p>
-            </ion-item>
-            <ion-item class="item-thumbnail-left">
-                <img src="/img/cal.png">
-                <h2>California</h2>
-                <p>Item</p>
-            </ion-item>
-            <ion-item class="item-thumbnail-left">
-                <img src="/img/colorado.png">
-                <h2>Colorado</h2>
-                <p>Item</p>
-            </ion-item>
-            <ion-item class="item-thumbnail-left">
-                <img src="/img/oregon_100.png">
-                <h2>Oregon</h2>
-                <p>Item</p>
-            </ion-item>
-            <ion-item class="item-thumbnail-left">
-                <img src="/img/osu.png">
-                <h2>Oregon St</h2>
-                <p>Item</p>
-            </ion-item>
+            <ion-item ng-repeat="t in tripSvc.trips">{{t.title}} ({{t.receipts.length}})</ion-item>
         </ion-list>
     </ion-content>
 </ion-view>

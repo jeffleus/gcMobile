@@ -18,31 +18,39 @@ function ($scope, $stateParams, ImageSvc) {
 
 }])
    
-.controller('gCStatusCtrl', ['$scope', '$log', '$stateParams', 'ImageSvc', 'Pouch', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
+.controller('gCStatusCtrl', ['$scope', '$log', '$stateParams', 'ImageSvc', 'Pouch', 'TripSvc', 'Receipt', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
 // You can include any angular dependencies as parameters for this function
 // TIP: Access Route Parameters for your page via $stateParams.parameterName
-function ($scope, $log, $stateParams, ImageSvc, Pouch) {
+function ($scope, $log, $stateParams, ImageSvc, Pouch, TripSvc, Receipt) {
 	
 	$scope.imageSvc = ImageSvc;
 	$scope.takePic = function() {
 		ImageSvc.takePicture().then(function(file) {
 			var docId = 'img_' + moment().format('YYMMDD.hhmmss');
 			var attachId = file.name;
-			
-			Pouch.db.putAttachment(docId, attachId, file, 'image/jpeg')
-			.then(function (result) {
-				// handle result
-				$log.log(result);
-				return Pouch.db.getAttachment(docId, attachId);
-			}).then(function(blob) {
-				if (blob) {
-					$log.info(blob);
-					ImageSvc.currentImage.imageUrl = URL.createObjectURL(blob);
-					$log.info(ImageSvc.currentImage.imageUrl);
-				}
-			}).catch(function (err) {
-				console.log(err);
-			});	
+
+            var rcpt = new Receipt();
+            rcpt.title = 'rcpt ' + moment().format('YYMMDD.hhmmss');
+            rcpt.vendor = 'some travel vendor';
+            
+            TripSvc.trips[0].addReceipt(rcpt, file).then(function(imgUrl) {
+                ImageSvc.currentImage.imageUrl = imgUrl;
+            });
+            
+//			Pouch.db.putAttachment(docId, attachId, file, 'image/jpeg')
+//			.then(function (result) {
+//				// handle result
+//				$log.log(result);
+//				return Pouch.db.getAttachment(docId, attachId);
+//			}).then(function(blob) {
+//				if (blob) {
+//					$log.info(blob);
+//					ImageSvc.currentImage.imageUrl = URL.createObjectURL(blob);
+//					$log.info(ImageSvc.currentImage.imageUrl);
+//				}
+//			}).catch(function (err) {
+//				console.log(err);
+//			});	
 		});
 	}
 }])
@@ -63,13 +71,17 @@ function ($scope, $stateParams) {
 
 }])
    
-.controller('teamsCtrl', ['$scope', '$log', '$stateParams', '$timeout', 'Pouch', 'Trip', 'TripSvc', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
+.controller('teamsCtrl', ['$scope', '$q', '$log', '$stateParams', '$timeout', 'Pouch', 'Trip', 'TripSvc', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
 // You can include any angular dependencies as parameters for this function
 // TIP: Access Route Parameters for your page via $stateParams.parameterName
-function ($scope, $log, $stateParams, $timeout, Pouch, Trip, TripSvc) {
+function ($scope, $q, $log, $stateParams, $timeout, Pouch, Trip, TripSvc) {
 	var self = this;
 	self.trips = [];
-	
+    $scope.tripSvc = TripSvc;
+	$scope.initDb = _initDb;
+    $scope.getAttachments = _getAttchments;
+    $scope.atts = [];
+    
 	_init();	
 	
 	function _init() {
@@ -79,6 +91,33 @@ function ($scope, $log, $stateParams, $timeout, Pouch, Trip, TripSvc) {
 			//_addTrip().then(function() { _addTrip(); });
 		});
 	}
+    function _initDb() {
+        Pouch.reset()
+        .then(function() {
+            _addTrip().then(function() { _addTrip(); });                    
+        }).catch(function(err) {
+            $log.error(err);
+        })
+    }
+    
+    function _getAttchments() {
+        $scope.atts = [];
+        var t = TripSvc.trips[0];
+        var chain = $q.when();
+        t.receipts.forEach(function(r) {
+            $log.info('Receipt: ' + r.title);
+            chain.then(function() {
+                return Pouch.db.getAttachment(t.receiptDocId, r.attachId)
+                .then(function(blob) {
+                    $log.info(URL.createObjectURL(blob));
+                    var imgSrc = URL.createObjectURL(blob)
+                    $scope.atts.push({image: imgSrc});
+                    $scope.$apply();
+                });
+            })
+        });
+        return Pouch.db.getAttachment
+    }
 
 	function _addTrip() {
 		var tripIndex = TripSvc.trips.length;

@@ -9,6 +9,7 @@ function pouchService($log) {
 	self.reset = function() {
 		return self.db.destroy().then(function(result) {
 			$log.info('successfully destroyed database');
+            return _initDB();
 		}).catch(function(err) {
 			$log.error(err);
 		});

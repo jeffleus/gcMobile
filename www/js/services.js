@@ -68,6 +68,9 @@ angular.module('app.services', [])
     var Trip = function(data) {
         var self = this;
 		this._id = moment().format('YYYYMMDD.hhmmss.SSS');
+        this.receiptDocId = 'rcpts_' + this._id;
+        this.receiptRev = '0-0';
+        this.receiptIndex = 0;
         this.title = "";
 		this.tripDate = moment().toDate();
 		this.receipts = [];
@@ -79,6 +82,9 @@ angular.module('app.services', [])
 			self._attachments = data['_attachments'];
             self.title = data['title'];
             self.tripDate = moment(data['tripDate']).toDate();
+            self.receiptIndex = data['receiptIndex'];
+            self.receiptDocId = data['receiptDocId'];
+            self.receiptRev = data['receiptRev'];
 			
 			if (data.receipts && data.receipts.length > 1) {
 				data.receipts.forEach(function(r) {
@@ -87,33 +93,75 @@ angular.module('app.services', [])
 			}
         }
 		
-		Trip.prototype.addReceipt = function(r) {
-			var self = this;			
-//			var attachment = 
-//					"TGVnZW5kYXJ5IGhlYXJ0cywgdGVhciB1cyBhbGwgYXBhcnQKTWFrZS" +
-//					"BvdXIgZW1vdGlvbnMgYmxlZWQsIGNyeWluZyBvdXQgaW4gbmVlZA==";
-			var attachment = r.imageFile;
-			self.receipts.push(r);
-			
-//			Pouch.db.putAttachment(self._id, r.attachmentId, self._rev, attachment, 'image/jpeg')
-//			.then(function (result) {
-//				// handle result
-//				$log.log(result);
-//				return Pouch.db.get(TripSvc.trips[1]._id, { attachments:true });
-//			}).then(function(tripDoc) {
-//				$log.info(tripDoc);
-//				var updatedTrip = new Trip(tripDoc);				
-//				TripSvc.trips[1] = updatedTrip;
-//				//delete tripDoc._attachments;
-//				console.info(TripSvc.trips[1]);
-//		//		return Pouch.db.put(tripDoc);
-//		//	}).then(function(result) {
-//		//		console.info(result);		
-//			}).catch(function (err) {
-//				console.log(err);
-//			});	
-		}
+		Trip.prototype.addReceipt = function(r, file) {
+			var self = this;
+            r.attachId = 'receipt_' + (++self.receiptIndex) + '.jpg';
+            var receiptResult = {};
+            return _saveAttachment.call( self, r.attachId, file )
+                .then(function(result){
+                    self.receiptIndex++;
+                    self.receiptRev = result.receiptRev;
+                    self.receipts.push(r);
+                    receiptResult.imageUrl = result.imageUrl;
+                    return Pouch.db.put(self);
+                }).then(function(result) {
+                    self._rev = result.rev;
+                    return receiptResult.imageUrl; 
+                }).catch(function(err) {
+                    self.receiptIndex--;
+                    $log.error(err);
+                });
+		};
+        
+        function _saveAttachment(attachId, file) {
+            //grab the docId for receipt master doc from this trip object
+            var docId = this.receiptDocId;
+            //setup the latest document revision nunmber if not new
+            var attachmentResult = {};
+            var rev = (this.receiptRev!=="0-0")?this.receiptRev:undefined;
+            //put the image file in the receipt master doc
+			return Pouch.db.putAttachment(docId, attachId, rev, file, 'image/jpeg')
+                .then(function (result) {
+                    //log the result and update the trip to hold the latest revision for the master doc
+                    $log.log(result);
+                    attachmentResult.receiptRev = result.rev;
+                    //then, grab the image file blob using getAttachment
+                    return Pouch.db.getAttachment(docId, attachId);
+                }).then(function(blob) {
+                    if (blob) {
+//                        $log.info(blob);
+//                        //set the imageUrl of the current image as an object URL for the blob data
+//                        ImageSvc.currentImage.imageUrl = URL.createObjectURL(blob);
+//                        $log.info(ImageSvc.currentImage.imageUrl);
+                        attachmentResult.imageUrl = URL.createObjectURL(blob);
+                        return attachmentResult;
+                    }
+                }).catch(function (err) {
+                    console.log(err);
+                });            
+        }
     }
 
     return Trip;
+})
+
+.factory('Receipt', function($log) {
+    var Receipt = function(data) {
+        var self = this;
+        this.title = "";
+        this.vendor = "";
+        this.receiptDate = moment().toDate();
+		
+		if (data) {
+            //boolean attributes from the JSON data
+            self.title = data['title'];
+            self.vendor = data['vendor'];
+            self.receiptDate = moment(data['receiptDate']).toDate();
+            //picked up once saved to the pouchdb w/ an attachment
+            self.docId = data['docId'];
+            self.attachId = data['attachId'];			
+        }
+    }
+
+    return Receipt;
 });
