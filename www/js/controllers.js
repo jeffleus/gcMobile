@@ -26,9 +26,7 @@ function ($scope, $log, $stateParams, ImageSvc, Pouch, TripSvc, Receipt) {
 	$scope.imageSvc = ImageSvc;
 	$scope.takePic = function() {
 		ImageSvc.takePicture().then(function(file) {
-			var docId = 'img_' + moment().format('YYMMDD.hhmmss');
-			var attachId = file.name;
-
+			//create a receipt, set the title and vendor defaults
             var rcpt = new Receipt();
             rcpt.title = 'rcpt ' + moment().format('YYMMDD.hhmmss');
             rcpt.vendor = 'some travel vendor';

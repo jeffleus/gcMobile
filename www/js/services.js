@@ -6,12 +6,12 @@ angular.module('app.services', [])
 	self.trips = [];
 	self.addTrip = _addTrip;
 	self.saveTrips = _saveTrips;
-	self.ready = _init();
-	
+
+	self.ready = _init();	
 	function _init() {
 		return Pouch.db.allDocs({ include_docs:true, attachments:true })
 		.then(function(result) {
-			console.info(result);
+			$log.info(result);
 			result.rows.forEach(function(r) {
 				if (r.doc.tripDate) {
 					var t = new Trip(r.doc);
@@ -24,26 +24,26 @@ angular.module('app.services', [])
 			$log.error(err);
 			return false;
 		});
-//		}).then(function() {
-//			console.log('tripCount: ' + self.trips.length);
-//		});
 	}
 	
 	function _addTrip(trip) {
 		self.trips.push(trip);
 		return Pouch.db.put(trip)
 			.then(function(result) {
-				console.info('Trip successfully added to pouchdb');				
+				$log.info('Trip successfully added to pouchdb');				
 			}).catch(function(err) {
-				console.error(err);
+				$log.error(err);
 			});
 	}
 	
 	function _saveTrips() {
+		//start a promise chain w/ an empty $q.when
 		var chain = $q.when();
+		//then, loop each trip in the collection chaining the save promises
 		self.trips.forEach(function(t) {
 			chain = chain.then(_saveTrip(t));
 		});
+		//return the promise chain to the sevice client
 		return chain;
 	}
 			
@@ -51,12 +51,11 @@ angular.module('app.services', [])
 		//needs to be a factory to all sequential promise chaining in _saveTrips()
 		return function() {
 			return Pouch.db.put(doc).then(function(result) {
-				console.log('SaveTrip...');
-				console.log(result);
+				$log.log('SaveTrip...' + result.ok);
 				return result;
 			}).catch(function(err) {
-				console.error('Err_SaveTrip:');
-				console.error(err);
+				$log.error('TripSvc_saveTrip():');
+				$log.error(err);
 				return false;
 			});
 		};
@@ -137,7 +136,7 @@ angular.module('app.services', [])
                         return attachmentResult;
                     }
                 }).catch(function (err) {
-                    console.log(err);
+                    $log.log(err);
                 });            
         }
     }
@@ -158,7 +157,6 @@ angular.module('app.services', [])
             self.vendor = data['vendor'];
             self.receiptDate = moment(data['receiptDate']).toDate();
             //picked up once saved to the pouchdb w/ an attachment
-            self.docId = data['docId'];
             self.attachId = data['attachId'];			
         }
     }

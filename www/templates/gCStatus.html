@@ -2,23 +2,29 @@
     <ion-content padding="true" class="has-header">
         <form id="gCStatus-form3" class="list ">
             <label class="item item-input " id="gCStatus-input6">
-                <span class="input-label">Content</span>
+                <span class="input-label">Receipt Date</span>
                 <input type="text" placeholder="operational">
             </label>
             <label class="item item-input " id="gCStatus-input7">
-                <span class="input-label">Catalog</span>
+                <span class="input-label">Title</span>
                 <input type="text" placeholder="oeprational">
             </label>
             <label class="item item-input " id="gCStatus-input8">
-                <span class="input-label">Downloader</span>
+                <span class="input-label">Vendor</span>
                 <input type="text" placeholder="waiting">
             </label>
             <label class="item item-input " id="gCStatus-input9">
-                <span class="input-label">Mobile</span>
+                <span class="input-label">Description</span>
                 <input type="text" placeholder="operational">
             </label>
-        </form>
-		<button ng-click="takePic()">GetPic</button>
-		<img ng-src="{{(imageSvc.currentImage.imageUrl)?imageSvc.currentImage.imageUrl:imageSvc.currentImage.imageFile.localURL}}">
+			<div class="item item-input-inset">
+				<label class="item-input-wrapper">Click for camera or photo library
+				</label>
+				<button class="button button-small button-balanced" ng-click="takePic()">
+					<i class="icon ion-ios-camera"></i></button>
+			</div>
+			<img ng-src="{{(imageSvc.currentImage.imageUrl)?imageSvc.currentImage.imageUrl:imageSvc.currentImage.imageFile.localURL}}"
+				 width="100%" style="border:solid 1px red;">
+			</form>
     </ion-content>
 </ion-view>
